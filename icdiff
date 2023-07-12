@@ -52,6 +52,39 @@ color_codes = {
     "white_bold": "\033[1;37m",
 }
 
+# https://gist.github.com/MicahElliott/719710?permalink_comment_id=3180418#gistcomment-3180418
+# https://stackoverflow.com/a/33206814
+cubelevels = [0x00, 0x5F, 0x87, 0xAF, 0xD7, 0xFF]
+snaps = [(x + y) / 2 for x, y in zip(cubelevels, [0] + cubelevels)][1:]
+
+def background(color):
+    return replace_all(
+        {"\033[1;": "\033[7;1;", "\033[0;": "\033[7;"}, color
+    )
+
+def rgb2short(color):
+    """Converts RGB values to the nearest equivalent xterm-256 color."""
+    r, g, b = [sum(1 for s in snaps if s < c) for c in color]
+    return r * 36 + g * 6 + b + 16
+
+
+def hex2rgb(h):
+    h = h.lstrip("#")
+    if len(h) != 6:
+        raise ValueError(f"{h} doesn't seem to be a valid hex code")
+
+    return tuple(int(c, 16) for c in (h[:2], h[2:4], h[4:]))
+
+def determine_color(c, bold=False, is_bg=False):
+    if c in color_codes:
+        code = color_codes[c]
+        if is_bg:
+            return background(code)
+    if len(c) < 3 and c.isdigit() and int(c) < 256:
+        if is_bg:
+            return f"\033[{int(bold)};48;5;{c}m"      #That is, \033[48;5;<BG COLOR>m
+        return f"\033[{int(bold)};38;5;{c}m"     #That is, \033[38;5;<FG COLOR>m
+
 
 color_mapping = {
     "add": "green_bold",
@@ -437,10 +470,6 @@ class ConsoleDiff(object):
                 yield line
 
     def colorize(self, s):
-        def background(color):
-            return replace_all(
-                {"\033[1;": "\033[7;1;", "\033[0;": "\033[7;"}, color
-            )
 
         C_ADD = color_codes[color_mapping["add"]]
         C_SUB = color_codes[color_mapping["subtract"]]
