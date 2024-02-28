@@ -72,11 +72,14 @@ class Colors:
 
         return tuple(int(c, 16) for c in (h[:2], h[2:4], h[4:]))
 
+    def get(op, is_bg=False, is_bold=False):
+        pass
+
     def determine_color(c, bold=False, is_bg=False):
         if c in color_codes:
             code = color_codes[c]
             if is_bg:
-                return background(code)
+                return _background(code)
         if len(c) < 3 and c.isdigit() and int(c) < 256:
             if is_bg:
                 return f"\033[{int(bold)};48;5;{c}m"      #That is, \033[48;5;<BG COLOR>m
